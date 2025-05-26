@@ -37,6 +37,26 @@ def analytics_page():
     """Analytics page"""
     return render_template('analytics.html')
 
+@app.route('/settings')
+def settings_page():
+    """Settings page"""
+    return render_template('settings.html')
+
+@app.route('/reports')
+def reports_page():
+    """Reports page"""
+    return render_template('reports.html')
+
+@app.route('/bot-config')
+def bot_config_page():
+    """Bot configuration page"""
+    return render_template('bot_config.html')
+
+@app.route('/ai-config')
+def ai_config_page():
+    """AI configuration page"""
+    return render_template('ai_config.html')
+
 def init_services():
     """Initialize services after app context is available"""
     global analytics_service, bot_instance
@@ -122,6 +142,10 @@ def start_bot():
 # Initialize services when the module is imported
 with app.app_context():
     init_services()
+    
+    # Start the bot automatically
+    bot_thread = threading.Thread(target=start_bot, daemon=True)
+    bot_thread.start()
 
 if __name__ == '__main__':
     # Start the bot in a separate thread

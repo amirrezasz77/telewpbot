@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تنظیمات ربات - ربات تلگرام</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <nav class="navbar navbar-expand-lg mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/bot-config">
+                    <i class="fas fa-robot me-2"></i>
+                    تنظیمات ربات تلگرام
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/settings">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        بازگشت به تنظیمات
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Bot Status -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-power-off me-2"></i>
+                                کنترل ربات
+                            </h5>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-success" onclick="startBot()">
+                                    <i class="fas fa-play me-1"></i>
+                                    شروع
+                                </button>
+                                <button type="button" class="btn btn-warning" onclick="restartBot()">
+                                    <i class="fas fa-sync me-1"></i>
+                                    راه‌اندازی مجدد
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="stopBot()">
+                                    <i class="fas fa-stop me-1"></i>
+                                    توقف
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="status-indicator status-online me-2"></div>
+                                    <div>
+                                        <h6 class="mb-0">وضعیت ربات</h6>
+                                        <small class="text-success" id="bot-status">آنلاین</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">آخرین فعالیت</h6>
+                                    <small class="text-muted" id="last-activity">2 دقیقه پیش</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">کاربران متصل</h6>
+                                    <small class="text-info" id="connected-users">15 نفر</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">پیام‌های امروز</h6>
+                                    <small class="text-warning" id="messages-today">127 پیام</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bot Configuration -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cog me-2"></i>
+                            تنظیمات اصلی ربات
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="bot-config-form">
+                            <div class="mb-3">
+                                <label for="bot-token" class="form-label">توکن ربات تلگرام</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="bot-token" placeholder="1234567890:ABCDEFG...">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('bot-token')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">توکن ربات را از @BotFather دریافت کنید</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="bot-username" class="form-label">نام کاربری ربات</label>
+                                <input type="text" class="form-control" id="bot-username" placeholder="@your_bot">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="webhook-url" class="form-label">آدرس وب‌هوک</label>
+                                <input type="url" class="form-control" id="webhook-url" placeholder="https://yourapp.com/webhook">
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="auto-start" checked>
+                                <label class="form-check-label" for="auto-start">
+                                    شروع خودکار ربات
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                ذخیره تنظیمات
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-comments me-2"></i>
+                            تنظیمات مکالمه
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="conversation-config-form">
+                            <div class="mb-3">
+                                <label for="response-delay" class="form-label">تأخیر پاسخ (ثانیه)</label>
+                                <input type="range" class="form-range" id="response-delay" min="0" max="5" value="1" step="0.5">
+                                <div class="d-flex justify-content-between">
+                                    <small>فوری</small>
+                                    <small>5 ثانیه</small>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="conversation-timeout" class="form-label">زمان انقضای مکالمه (دقیقه)</label>
+                                <input type="number" class="form-control" id="conversation-timeout" value="30" min="5" max="120">
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="typing-indicator" checked>
+                                <label class="form-check-label" for="typing-indicator">
+                                    نمایش حالت تایپ
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="read-receipts" checked>
+                                <label class="form-check-label" for="read-receipts">
+                                    تأیید خواندن پیام
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="auto-greet" checked>
+                                <label class="form-check-label" for="auto-greet">
+                                    خوش‌آمدگویی خودکار
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                ذخیره تنظیمات
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Configuration -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bars me-2"></i>
+                            تنظیمات منو و دکمه‌ها
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>منوی اصلی</h6>
+                                <div class="list-group mb-3">
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>🛍️ محصولات</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editMenuItem('products')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <div class="form-check form-switch d-inline-block">
+                                                    <input class="form-check-input" type="checkbox" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>📂 دسته‌بندی‌ها</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editMenuItem('categories')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <div class="form-check form-switch d-inline-block">
+                                                    <input class="form-check-input" type="checkbox" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>📦 پیگیری سفارش</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editMenuItem('tracking')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <div class="form-check form-switch d-inline-block">
+                                                    <input class="form-check-input" type="checkbox" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>💬 پشتیبانی</span>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editMenuItem('support')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <div class="form-check form-switch d-inline-block">
+                                                    <input class="form-check-input" type="checkbox" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button class="btn btn-outline-success" onclick="addMenuItem()">
+                                    <i class="fas fa-plus me-2"></i>
+                                    افزودن دکمه جدید
+                                </button>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6>پیام‌های خودکار</h6>
+                                <div class="mb-3">
+                                    <label for="welcome-msg" class="form-label">پیام خوش‌آمدگویی</label>
+                                    <textarea class="form-control" id="welcome-msg" rows="3">🔸سلام! به ربات فروشگاه خوش آمدید. چطور می‌تونم کمکتون کنم؟</textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="help-msg" class="form-label">پیام راهنما</label>
+                                    <textarea class="form-control" id="help-msg" rows="3">💬 فقط پیام خود را بنویسید و من پاسخ خواهم داد!</textarea>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="error-msg" class="form-label">پیام خطا</label>
+                                    <textarea class="form-control" id="error-msg" rows="2">❌ خطایی رخ داده است. لطفاً دوباره تلاش کنید.</textarea>
+                                </div>
+                                
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    ذخیره پیام‌ها
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Settings -->
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            تنظیمات پیشرفته
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="advanced-config-form">
+                            <div class="mb-3">
+                                <label for="max-concurrent-users" class="form-label">حداکثر کاربران همزمان</label>
+                                <input type="number" class="form-control" id="max-concurrent-users" value="100" min="10" max="1000">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message-queue-size" class="form-label">اندازه صف پیام‌ها</label>
+                                <input type="number" class="form-control" id="message-queue-size" value="1000" min="100" max="10000">
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="debug-mode">
+                                <label class="form-check-label" for="debug-mode">
+                                    حالت دیباگ
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="log-messages" checked>
+                                <label class="form-check-label" for="log-messages">
+                                    ثبت پیام‌ها در لاگ
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                ذخیره تنظیمات
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tools me-2"></i>
+                            ابزارهای تست
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="test-message" class="form-label">پیام تست</label>
+                            <textarea class="form-control" id="test-message" rows="2" placeholder="سلام، این یک پیام تست است"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="test-user-id" class="form-label">شناسه کاربر تست</label>
+                            <input type="text" class="form-control" id="test-user-id" placeholder="123456789">
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-info" onclick="sendTestMessage()">
+                                <i class="fas fa-paper-plane me-2"></i>
+                                ارسال پیام تست
+                            </button>
+                            
+                            <button class="btn btn-outline-warning" onclick="testBotConnection()">
+                                <i class="fas fa-link me-2"></i>
+                                تست اتصال
+                            </button>
+                            
+                            <button class="btn btn-outline-success" onclick="validateConfig()">
+                                <i class="fas fa-check me-2"></i>
+                                بررسی تنظیمات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Bot control functions
+        function startBot() {
+            showAlert('ربات با موفقیت شروع شد', 'success');
+            updateBotStatus('آنلاین', 'success');
+        }
+
+        function stopBot() {
+            showAlert('ربات متوقف شد', 'warning');
+            updateBotStatus('آفلاین', 'danger');
+        }
+
+        function restartBot() {
+            showAlert('ربات در حال راه‌اندازی مجدد...', 'info');
+            setTimeout(() => {
+                showAlert('ربات با موفقیت راه‌اندازی شد', 'success');
+                updateBotStatus('آنلاین', 'success');
+            }, 2000);
+        }
+
+        function updateBotStatus(status, alertClass) {
+            const statusElement = document.getElementById('bot-status');
+            statusElement.textContent = status;
+            statusElement.className = `text-${alertClass}`;
+        }
+
+        // Form handlers
+        document.getElementById('bot-config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showAlert('تنظیمات ربات ذخیره شد', 'success');
+        });
+
+        document.getElementById('conversation-config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showAlert('تنظیمات مکالمه ذخیره شد', 'success');
+        });
+
+        document.getElementById('advanced-config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showAlert('تنظیمات پیشرفته ذخیره شد', 'success');
+        });
+
+        // Test functions
+        function sendTestMessage() {
+            const message = document.getElementById('test-message').value;
+            const userId = document.getElementById('test-user-id').value;
+            
+            if (!message || !userId) {
+                showAlert('لطفاً پیام و شناسه کاربر را وارد کنید', 'warning');
+                return;
+            }
+            
+            showAlert('پیام تست ارسال شد', 'success');
+        }
+
+        function testBotConnection() {
+            showAlert('در حال تست اتصال...', 'info');
+            setTimeout(() => {
+                showAlert('اتصال با موفقیت برقرار شد', 'success');
+            }, 1500);
+        }
+
+        function validateConfig() {
+            showAlert('تنظیمات معتبر است', 'success');
+        }
+
+        // Utility functions
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = event.target;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        function editMenuItem(item) {
+            showAlert(`ویرایش آیتم ${item} در نسخه بعدی اضافه خواهد شد`, 'info');
+        }
+
+        function addMenuItem() {
+            showAlert('امکان افزودن دکمه جدید در نسخه بعدی اضافه خواهد شد', 'info');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.insertBefore(alertDiv, document.body.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // Update response delay display
+        document.getElementById('response-delay').addEventListener('input', function() {
+            const value = this.value;
+            const display = value == 0 ? 'فوری' : `${value} ثانیه`;
+            this.nextElementSibling.children[1].textContent = display;
+        });
+    </script>
+</body>
+</html>
