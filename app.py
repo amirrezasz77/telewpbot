@@ -214,9 +214,6 @@ async def set_webhook():
     webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
     await bot_instance.application.bot.set_webhook(webhook_url)
 
-@app.before_first_request
-def before_first_request():
-    asyncio.get_event_loop().create_task(set_webhook())
 
 def init_services():
     """Initialize services after app context is available"""
@@ -296,24 +293,34 @@ with app.app_context():
 
 def create_app():
     """Application factory"""
-    # Set up logging
+    app = Flask(__name__)
+    app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///telegram_bot.db")
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_recycle": 300,
+        "pool_pre_ping": True,
+    }
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    # Logging
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
 
     with app.app_context():
-        # Create database tables
         db.create_all()
 
-        # Initialize analytics service
         global analytics_service
         if not analytics_service:
             from analytics import AnalyticsService
             analytics_service = AnalyticsService(db)
             logging.info("Analytics service initialized")
 
-        # Initialize and start bot in a separate thread
         global bot_instance
         if not bot_instance:
             from bot import TelegramBot
@@ -324,6 +331,11 @@ def create_app():
                 logging.info("Telegram bot started in separate thread")
             except Exception as e:
                 logging.error(f"Failed to start Telegram bot: {e}")
+
+    # 👇 انتقال درست دکوریتور
+    @app.before_first_request
+    def before_first_request():
+        asyncio.get_event_loop().create_task(set_webhook())
 
     return app
 
