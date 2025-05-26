@@ -9,4 +9,5 @@ requests
 gunicorn
 aiogram[fast]
 quart
-quart-migrate
+Flask-Migrate
+quart-sqlalchemy
