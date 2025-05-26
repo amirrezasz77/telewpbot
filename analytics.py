@@ -405,7 +405,7 @@ class AnalyticsService:
         try:
             with self.db.session() as session:
                 return session.query(Conversation).filter(
-                    Conversation.status == 'active'
+                    Conversation.status == ConversationStatus.ACTIVE
                 ).count()
         except Exception as e:
             logging.error(f"Error getting active conversations: {e}")
