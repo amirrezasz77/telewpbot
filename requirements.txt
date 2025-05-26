@@ -7,3 +7,4 @@ openai
 woocommerce
 requests
 gunicorn
+quart
