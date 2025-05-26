@@ -8,16 +8,18 @@ from flask_migrate import Migrate
 import asyncio
 from telegram import Update
 from telegram.ext import Application
+TOKEN = "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
+bot = Bot(token=TOKEN)
 
 # create the app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-@app.route("/webhook", methods=["POST"])
+@app.route(f"/{TOKEN}", methods=["POST"])
 def webhook():
-    update = Update.de_json(request.get_json(force=True), bot)
-    dispatcher.process_update(update)
-    return "OK"
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    application.update_queue.put(update)
+    return "ok"
 
 # configure the database - PostgreSQL
 database_url = os.environ.get("DATABASE_URL")
