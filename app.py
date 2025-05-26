@@ -250,10 +250,7 @@ async def on_startup():
 async def on_shutdown():
     await bot.delete_webhook()
     await bot.session.close()
-
-if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
-
+    
 
 async def init_services():
     """Initialize services after app context is available"""
