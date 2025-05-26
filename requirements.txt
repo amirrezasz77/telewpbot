@@ -1,12 +1,11 @@
 python-telegram-bot==20.7
 quart==0.18.3
-# quart-sqlalchemy حذف شده یا جایگزین شود
 hypercorn==0.14.4
-uvloop==0.17.0
-python-dotenv
+sqlalchemy==2.0.30
+aiogram==3.2.0
+python-dotenv==1.1.0
 openai
 woocommerce
 requests
-aiogram==3.4.1
 werkzeug==2.3.7
 blinker==1.6.2
