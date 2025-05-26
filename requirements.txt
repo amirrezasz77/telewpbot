@@ -7,6 +7,6 @@ python-dotenv
 openai
 woocommerce
 requests
-aiogram==3.4.1
+aiogram==3.0.0
 werkzeug==2.3.7
 blinker==1.6.2
