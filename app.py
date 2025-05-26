@@ -204,13 +204,13 @@ def database_status():
 
 # Webhook endpoint برای Telegram
 @app.route(f"/{TOKEN}", methods=["POST"])
-async def webhook():
+ def webhook():
     update = Update.de_json(data=request.get_json(force=True), bot=bot_instance.application.bot)
     await bot_instance.application.process_update(update)
     return "ok"
 
 # تنظیم Webhook
-async def set_webhook():
+ def set_webhook():
     webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
     await bot_instance.application.bot.set_webhook(webhook_url)
 
