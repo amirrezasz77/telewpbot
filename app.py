@@ -6,7 +6,6 @@ from database import db
 import threading
 from flask_migrate import Migrate
 import asyncio
-from bot import TelegramBot
 
 # create the app
 app = Flask(__name__)
