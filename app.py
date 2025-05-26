@@ -7,19 +7,39 @@ import threading
 from flask_migrate import Migrate
 import asyncio
 from telegram import Update
-from telegram.ext import Application
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+TOKEN = os.getenv("BOT_TOKEN") or "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
+app_telegram = TelegramBot(db, analytics_service).application
+
+
 TOKEN = "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
-bot = Bot(token=TOKEN)
 
 # create the app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+@app.route("/")
+def index():
+    return "ربات فعال است ✅"
+
+# این رو تلگرام صدا می‌زنه وقتی پیام جدید بیاد
 @app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    application.update_queue.put(update)
+async def webhook():
+    update = Update.de_json(data=request.get_json(force=True), bot=app_telegram.bot)
+    await app_telegram.process_update(update)
     return "ok"
+
+# تنظیم Webhook در اجرای اولیه
+async def set_webhook():
+    webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
+    await app_telegram.bot.set_webhook(webhook_url)
+
+# اجرای تنظیم Webhook
+@app.before_first_request
+def before_first_request():
+    asyncio.get_event_loop().create_task(set_webhook())
+
+
 
 # configure the database - PostgreSQL
 database_url = os.environ.get("DATABASE_URL")
