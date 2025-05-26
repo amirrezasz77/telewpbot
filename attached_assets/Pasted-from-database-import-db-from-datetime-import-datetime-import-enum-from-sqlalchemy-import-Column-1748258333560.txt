@@ -2,10 +2,30 @@ from database import db
 from datetime import datetime
 import enum
 
+from sqlalchemy import Column, Integer, String, DateTime, Enum as SqlEnum
+
+
 class ConversationStatus(enum.Enum):
     ACTIVE = "active"
     RESOLVED = "resolved"
     ESCALATED = "escalated"
+
+class Conversation(db.Model):
+    __tablename__ = 'conversation'
+
+    id = Column(Integer, primary_key=True)
+    status = Column(SqlEnum(ConversationStatus), default=ConversationStatus.ACTIVE)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    def __repr__(self):
+        return f"<Conversation(id={self.id}, status={self.status}, created_at={self.created_at})>"
+
+
+# class ConversationStatus(enum.Enum):
+#     ACTIVE = "active"
+#     RESOLVED = "resolved"
+#     ESCALATED = "escalated"
 
 class User(db.Model):
     """Telegram users who interact with the bot"""
@@ -17,10 +37,11 @@ class User(db.Model):
     language_code = db.Column(db.String(10), default='fa')  # Persian by default
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_interaction = db.Column(db.DateTime, default=datetime.utcnow)
-
+    
+    # Relationships
     conversations = db.relationship('Conversation', backref='user', lazy='dynamic')
     interactions = db.relationship('UserInteraction', backref='user', lazy='dynamic')
-
+    
     def __repr__(self):
         return f'<User {self.telegram_id}>'
 
@@ -28,26 +49,18 @@ class Conversation(db.Model):
     """Customer conversations with the bot"""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    status = db.Column(db.Enum(ConversationStatus), default=ConversationStatus.ACTIVE.value)
-
+    status = db.Column(db.Enum(ConversationStatus), default=ConversationStatus.ACTIVE)
     subject = db.Column(db.String(200))  # Auto-generated conversation topic
     started_at = db.Column(db.DateTime, default=datetime.utcnow)
     ended_at = db.Column(db.DateTime)
     escalated_at = db.Column(db.DateTime)  # When transferred to human support
     satisfaction_rating = db.Column(db.Integer)  # 1-5 stars
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
+    
+    # Relationships
     messages = db.relationship('Message', backref='conversation', lazy='dynamic')
-
+    
     def __repr__(self):
         return f'<Conversation {self.id}>'
-
-
-
-
-
-
 
 class Message(db.Model):
     """Individual messages in conversations"""

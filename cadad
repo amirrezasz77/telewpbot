@@ -1,0 +1,40 @@
+def create_app():
+    """Application factory"""
+    app = Flask(__name__)
+    app.config.from_object("config.Config")  # یا تنظیمات مستقیم
+
+    # Setup extensions
+    db.init_app(app)
+    migrate = Migrate(app, db)
+
+    # Logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    with app.app_context():
+        db.create_all()
+
+        global analytics_service
+        if not analytics_service:
+            from analytics import AnalyticsService
+            analytics_service = AnalyticsService(db)
+            logging.info("Analytics service initialized")
+
+        global bot_instance
+        if not bot_instance:
+            from bot import TelegramBot
+            try:
+                bot_instance = TelegramBot(db, analytics_service)
+                bot_thread = threading.Thread(target=bot_instance.start, daemon=True)
+                bot_thread.start()
+                logging.info("Telegram bot started in separate thread")
+            except Exception as e:
+                logging.error(f"Failed to start Telegram bot: {e}")
+
+    return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(host='0.0.0.0', port=5000, debug=True)

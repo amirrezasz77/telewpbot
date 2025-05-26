@@ -4,6 +4,8 @@ from flask import Flask, render_template, jsonify, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 from database import db
 import threading
+from flask_migrate import Migrate
+
 
 # create the app
 app = Flask(__name__)
@@ -13,19 +15,17 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # configure the database - PostgreSQL
 database_url = os.environ.get("DATABASE_URL")
 if not database_url:
-    # Fallback to SQLite for development
     database_url = "sqlite:///telegram_bot.db"
+
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
 
-# Enable debug logging
-logging.basicConfig(level=logging.DEBUG)
-
-# initialize the app with the extension
+# init extensions
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # Global variables
 analytics_service = None
@@ -305,3 +305,4 @@ if __name__ == '__main__':
 
     # Start the Flask app
     app.run(host='0.0.0.0', port=5000, debug=True)
+

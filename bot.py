@@ -7,11 +7,15 @@ from telegram.constants import ChatAction
 from datetime import datetime
 import threading
 import time
-
+from app import app
 from config import Config, MESSAGES
 from models import User, Conversation, Message, UserInteraction, ProductView, OrderTracking, ConversationStatus
 from ai_service import AIService
 from woocommerce_api import WooCommerceAPI
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class TelegramBot:
     """Main Telegram Bot class"""
@@ -139,81 +143,107 @@ class TelegramBot:
         except Exception as e:
             logging.error(f"Error in support_command: {e}")
             await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
-
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle text messages"""
+        user = update.effective_user
+        message_text = update.message.text.strip()
+
+        logging.info(f"[START] Received message from {user.id}: {message_text}")
+
         try:
-            user = await self._get_or_create_user(update.effective_user)
-            language = user.language_code or 'fa'
-            message_text = update.message.text
+            await self._save_message(user.id, message_text)
+            logging.info(f"[OK] Message saved")
 
-            # Get or create conversation
-            conversation = await self._get_or_create_conversation(user)
+            language = await self.get_user_language(user.id)
+            logging.info(f"[OK] Language fetched: {language}")
 
-            # Save user message
-            await self._save_message(conversation.id, message_text, is_from_user=True, 
-                                    telegram_message_id=update.message.message_id)
-
-            # Check if user is providing order number
-            session = self.user_sessions.get(user.telegram_id, {})
-            if session.get('waiting_for_order_number'):
-                await self._handle_order_tracking(update, user, message_text, language)
-                return
-
-            # Show typing action
-            await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-
-            # Analyze intent first
-            intent_analysis = self.ai_service.analyze_intent(message_text, language)
-
-            # Handle specific intents
-            if intent_analysis['intent'] == 'order_tracking':
-                entities = intent_analysis.get('entities', {})
-                order_number = entities.get('order_number')
-                if order_number:
-                    await self._handle_order_tracking(update, user, order_number, language)
-                    return
-                else:
-                    await self._prompt_for_order_number(update, user, language)
-                    return
-
-            elif intent_analysis['intent'] == 'category_browse':
-                await self._show_categories(update, language)
-                return
-
-            elif intent_analysis['intent'] == 'product_inquiry':
-                # If looking for specific product, try to help
-                await self._handle_product_inquiry(update, user, message_text, language)
-                return
-
-            # Generate AI response
-            conversation_context = await self._get_conversation_context(conversation.id)
-            ai_response = self.ai_service.generate_response(
-                message_text, conversation_context, language
-            )
-
-            # Check if should escalate to human
-            if ai_response['should_escalate'] or ai_response['confidence'] < 0.3:
-                await self._escalate_to_human(update, user, language)
-                return
-
-            # Send AI response
-            response_text = ai_response['response']
-            await update.message.reply_text(response_text)
-
-            # Save bot response
-            await self._save_message(conversation.id, response_text, is_from_user=False, 
-                                    is_ai_response=True, ai_confidence=ai_response['confidence'])
-
-            # Track interaction
-            await self._track_interaction(user.id, 'ai_conversation', {
-                'intent': intent_analysis['intent'],
-                'confidence': ai_response['confidence']
-            })
+            if re.search(r"(پیگیری سفارش|وضعیت سفارش)", message_text):
+                logging.info("[ACTION] Order tracking path triggered")
+                await self._handle_order_tracking(update, context, language)
+            elif re.search(r"(پشتیبان|انسان|پاسخگو)", message_text):
+                logging.info("[ACTION] Escalate to human")
+                await self._escalate_to_human(update, context, language)
+            else:
+                logging.info("[ACTION] Product inquiry")
+                await self._handle_product_inquiry(update, context, language)
 
         except Exception as e:
-            logging.error(f"Error in handle_message: {e}")
+            logging.error(f"[ERROR] in handle_message: {e}")
             await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
+
+    # async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    #     """Handle text messages"""
+    #     try:
+    #         user = await self._get_or_create_user(update.effective_user)
+    #         language = user.language_code or 'fa'
+    #         message_text = update.message.text
+
+    #         # Get or create conversation
+    #         conversation = await self._get_or_create_conversation(user)
+
+    #         # Save user message
+    #         await self._save_message(conversation.id, message_text, is_from_user=True, 
+    #                                 telegram_message_id=update.message.message_id)
+
+    #         # Check if user is providing order number
+    #         session = self.user_sessions.get(user.telegram_id, {})
+    #         if session.get('waiting_for_order_number'):
+    #             await self._handle_order_tracking(update, user, message_text, language)
+    #             return
+
+    #         # Show typing action
+    #         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
+
+    #         # Analyze intent first
+    #         intent_analysis = self.ai_service.analyze_intent(message_text, language)
+
+    #         # Handle specific intents
+    #         if intent_analysis['intent'] == 'order_tracking':
+    #             entities = intent_analysis.get('entities', {})
+    #             order_number = entities.get('order_number')
+    #             if order_number:
+    #                 await self._handle_order_tracking(update, user, order_number, language)
+    #                 return
+    #             else:
+    #                 await self._prompt_for_order_number(update, user, language)
+    #                 return
+
+    #         elif intent_analysis['intent'] == 'category_browse':
+    #             await self._show_categories(update, language)
+    #             return
+
+    #         elif intent_analysis['intent'] == 'product_inquiry':
+    #             # If looking for specific product, try to help
+    #             await self._handle_product_inquiry(update, user, message_text, language)
+    #             return
+
+    #         # Generate AI response
+    #         conversation_context = await self._get_conversation_context(conversation.id)
+    #         ai_response = self.ai_service.generate_response(
+    #             message_text, conversation_context, language
+    #         )
+
+    #         # Check if should escalate to human
+    #         if ai_response['should_escalate'] or ai_response['confidence'] < 0.3:
+    #             await self._escalate_to_human(update, user, language)
+    #             return
+
+    #         # Send AI response
+    #         response_text = ai_response['response']
+    #         await update.message.reply_text(response_text)
+
+    #         # Save bot response
+    #         await self._save_message(conversation.id, response_text, is_from_user=False, 
+    #                                 is_ai_response=True, ai_confidence=ai_response['confidence'])
+
+    #         # Track interaction
+    #         await self._track_interaction(user.id, 'ai_conversation', {
+    #             'intent': intent_analysis['intent'],
+    #             'confidence': ai_response['confidence']
+    #         })
+
+    #     except Exception as e:
+    #         logging.error(f"Error in handle_message: {e}")
+    #         await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
 
     async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle button callbacks"""
@@ -746,7 +776,8 @@ class TelegramBot:
 
     async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE):
         """Handle errors"""
-        logging.error(f"Exception while handling an update: {context.error}")
+        logging.error("Exception details:\n%s", traceback.format_exc())
+
 
         if update and hasattr(update, 'effective_message') and update.effective_message:
             try:
@@ -763,11 +794,11 @@ class TelegramBot:
             await self.application.initialize()
             await self.application.start()
             await self.application.updater.start_polling(drop_pending_updates=True)
-            
+
             # Keep the bot running
             while True:
                 await asyncio.sleep(1)
-                
+
         except Exception as e:
             logging.error(f"Failed to start bot: {e}")
             raise
@@ -776,8 +807,12 @@ class TelegramBot:
 
     def start(self):
         """Start the bot (sync wrapper)"""
+        from app import app  # اگر app در app.py تعریف شده
+
         try:
-            asyncio.run(self.run())
+            with app.app_context():  # ← این خط مهمه
+                asyncio.run(self.run())
         except Exception as e:
             logging.error(f"Failed to start bot: {e}")
             raise
+

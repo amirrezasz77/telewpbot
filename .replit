@@ -38,6 +38,51 @@ mode = "sequential"
 task = "shell.exec"
 args = "python bot.py"
 
+[[workflows.workflow]]
+name = "flask db init"
+mode = "sequential"
+author = 43133977
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "flask db init"
+
+[[workflows.workflow]]
+name = "export FLASK_APP=\"app:create_app\""
+mode = "sequential"
+author = 43133977
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export FLASK_APP=\"app:create_app\""
+
+[[workflows.workflow]]
+name = "flask db migrate -m \"initial migration\""
+mode = "sequential"
+author = 43133977
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "flask db migrate -m \"initial migration\""
+
+[[workflows.workflow]]
+name = "flask db upgrade"
+mode = "sequential"
+author = 43133977
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "flask db upgrade"
+
+[[workflows.workflow]]
+name = "export FLASK_APP=app.py "
+mode = "sequential"
+author = 43133977
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "export FLASK_APP=app.py"
+
 [[ports]]
 localPort = 5000
 externalPort = 80

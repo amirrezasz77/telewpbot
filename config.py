@@ -8,8 +8,7 @@ class Config:
     """Configuration class for the application"""
     
     # Telegram Bot Configuration
-    TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-    
+    TELEGRAM_BOT_TOKEN = "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
     # OpenAI Configuration
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     
