@@ -202,17 +202,24 @@ def database_status():
             "message": str(e)
         }), 500
 
-@app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(data=request.get_json(force=True), bot=bot_instance.application.bot)
-    asyncio.get_event_loop().create_task(bot_instance.application.process_update(update))
-    return "ok"
+@app.route(f'/{TOKEN}', methods=['POST'])
+async def webhook():
+    try:
+        data = await request.get_json()
+        update = Update.model_validate(data)
+        await dp._process_update(update)
+    except Exception as e:
+        print("Webhook processing error:", e)
+    return "ok", 200
 
-# تنظیم Webhook
-def set_webhook():
+async def on_startup():
     webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
-    asyncio.run(bot_instance.application.bot.set_webhook(webhook_url))
+    await bot.set_webhook(webhook_url)
+    print("Webhook set to:", webhook_url)
 
+async def on_shutdown():
+    await bot.delete_webhook()
+    print("Webhook removed.")
 def init_services():
     """Initialize services after app context is available"""
     global analytics_service, bot_instance
