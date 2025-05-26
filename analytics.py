@@ -483,7 +483,7 @@ class AnalyticsService:
         """Get recent conversations"""
         with self.db.session() as session:
             conversations = session.query(Conversation).join(User).order_by(
-                Conversation.created_at.desc()
+                Conversation.started_at.desc()
             ).limit(limit).all()
 
             return [{
