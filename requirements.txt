@@ -6,7 +6,7 @@ openai
 woocommerce
 requests
 gunicorn
-aiogram[fast]
+aiogram
 quart-sqlalchemy
 uvloop==0.17.0
 werkzeug==2.3.7
