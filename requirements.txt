@@ -1,9 +1,11 @@
-
-flask
-flask-sqlalchemy
-python-telegram-bot
-python-dotenv
+python-telegram-bot==20.7
+quart==0.18.3
+hypercorn==0.14.4
+sqlalchemy==2.0.30
+aiogram==3.2.0
+python-dotenv==1.1.0
 openai
 woocommerce
 requests
-gunicorn
+werkzeug==2.3.7
+blinker==1.6.2
