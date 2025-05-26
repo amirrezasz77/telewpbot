@@ -10,3 +10,4 @@ aiogram[fast]
 quart
 quart-sqlalchemy
 uvloop==0.17.0
+werkzeug==2.3.7
