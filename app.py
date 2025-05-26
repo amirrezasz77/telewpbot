@@ -5,21 +5,13 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from database import db
 import threading
 from flask_migrate import Migrate
-import telegram
-TOKEN = "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
-bot = telegram.Bot(token=TOKEN)
+import asyncio
+from bot import TelegramBot
 
 # create the app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-@app.route(f"/{TOKEN}", methods=["POST"])
-def webhook():
-    update = telegram.Update.de_json(request.get_json(force=True), bot)
-    chat_id = update.message.chat.id
-    text = update.message.text
-    bot.send_message(chat_id=chat_id, text="دریافت شد: " + text)
-    return "ok", 200
 
 # configure the database - PostgreSQL
 database_url = os.environ.get("DATABASE_URL")
@@ -311,6 +303,10 @@ def create_app():
 if __name__ == '__main__':
     # Create the application
     app = create_app()
+
+
+    bot = TelegramBot(db=db_instance, analytics_service=analytics_instance)
+    asyncio.run(bot.application.run_polling())
 
     # Start the Flask app
     app.run(host='0.0.0.0', port=5000, debug=True)
