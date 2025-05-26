@@ -1,4 +1,190 @@
 // Dashboard JavaScript for Telegram Bot Analytics
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing Telegram Bot Dashboard...');
+    initializeDashboard();
+});
+
+function initializeDashboard() {
+    loadOverviewData();
+    loadPopularProducts();
+    loadRecentConversations();
+    loadBotStatus();
+    console.log('Dashboard initialized successfully');
+}
+
+function loadOverviewData() {
+    fetch('/api/overview')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('API Error:', data.error);
+                showPlaceholderData();
+                return;
+            }
+            updateOverviewCards(data);
+        })
+        .catch(error => {
+            console.error('Error fetching overview data:', error);
+            showPlaceholderData();
+        });
+}
+
+function loadPopularProducts() {
+    fetch('/api/popular-products')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('API Error:', data.error);
+                return;
+            }
+            updatePopularProducts(data);
+        })
+        .catch(error => {
+            console.error('Error fetching popular products:', error);
+        });
+}
+
+function loadRecentConversations() {
+    fetch('/api/conversations')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('API Error:', data.error);
+                return;
+            }
+            updateRecentConversations(data);
+        })
+        .catch(error => {
+            console.error('Error fetching conversations:', error);
+        });
+}
+
+function loadBotStatus() {
+    fetch('/api/bot/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('API Error:', data.error);
+                return;
+            }
+            updateBotStatus(data);
+        })
+        .catch(error => {
+            console.error('Error fetching bot status:', error);
+        });
+}
+
+function updateOverviewCards(data) {
+    // Update the overview cards if they exist
+    const totalUsersElement = document.getElementById('total-users');
+    const totalConversationsElement = document.getElementById('total-conversations');
+    const totalMessagesElement = document.getElementById('total-messages');
+    
+    if (totalUsersElement) totalUsersElement.textContent = data.total_users || 0;
+    if (totalConversationsElement) totalConversationsElement.textContent = data.total_conversations || 0;
+    if (totalMessagesElement) totalMessagesElement.textContent = data.total_messages || 0;
+}
+
+function updatePopularProducts(data) {
+    // Update popular products list
+    const container = document.getElementById('popular-products');
+    if (!container) return;
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-muted">هیچ محصولی هنوز مشاهده نشده است</p>';
+        return;
+    }
+    
+    const html = data.map(product => `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span>${product.product_name}</span>
+            <span class="badge bg-primary">${product.view_count} بازدید</span>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+function updateRecentConversations(data) {
+    // Update recent conversations list
+    const container = document.getElementById('recent-conversations');
+    if (!container) return;
+    
+    if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-muted">هیچ گفتگویی هنوز شروع نشده است</p>';
+        return;
+    }
+    
+    const html = data.map(conv => `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <strong>${conv.user_name}</strong>
+                <br>
+                <small class="text-muted">${conv.message_count} پیام</small>
+            </div>
+            <span class="badge bg-${getStatusColor(conv.status)}">${getStatusText(conv.status)}</span>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+function updateBotStatus(data) {
+    // Update bot status indicator
+    const statusElement = document.getElementById('bot-status');
+    if (!statusElement) return;
+    
+    if (data.running) {
+        statusElement.innerHTML = '<span class="badge bg-success">فعال</span>';
+    } else {
+        statusElement.innerHTML = '<span class="badge bg-danger">غیرفعال</span>';
+    }
+}
+
+function showPlaceholderData() {
+    // Show placeholder data when API is not available
+    updateOverviewCards({
+        total_users: 0,
+        total_conversations: 0,
+        total_messages: 0
+    });
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'active': return 'success';
+        case 'resolved': return 'info';
+        case 'escalated': return 'warning';
+        default: return 'secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'active': return 'فعال';
+        case 'resolved': return 'حل شده';
+        case 'escalated': return 'ارجاع شده';
+        default: return 'نامشخص';
+    }
+}
+
+// Bot control functions
+function startBot() {
+    alert('ربات در حال اجرا است');
+}
+
+function stopBot() {
+    alert('توقف ربات در حال حاضر امکان‌پذیر نیست');
+}
+
+// Refresh dashboard data
+function refreshDashboard() {
+    initializeDashboard();
+}
+
+// Auto-refresh every 30 seconds
+setInterval(refreshDashboard, 30000);
 class TelegramBotDashboard {
     constructor() {
         this.charts = {};

@@ -29,6 +29,15 @@ task = "shell.exec"
 args = "gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "Run Bot Only"
+author = 43133977
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python bot.py"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
