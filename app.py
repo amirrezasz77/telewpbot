@@ -211,9 +211,9 @@ def start_bot():
 with app.app_context():
     init_services()
     
-    # Start the bot automatically
-    bot_thread = threading.Thread(target=start_bot, daemon=True)
-    bot_thread.start()
+    # Start the bot automatically - temporarily disabled due to import issues
+    # bot_thread = threading.Thread(target=start_bot, daemon=True)
+    # bot_thread.start()
 
 if __name__ == '__main__':
     # Start the bot in a separate thread
