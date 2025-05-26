@@ -8,7 +8,7 @@ from asyncio import to_thread
 from werkzeug.middleware.proxy_fix import ProxyFix
 from database import db
 import threading
-from quart_migrate import Migrate
+from flask_migrate import Migrate
 import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
