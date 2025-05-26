@@ -9,36 +9,16 @@ import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 TOKEN = os.getenv("BOT_TOKEN") or "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
-app_telegram = TelegramBot(db, analytics_service).application
 
 
-TOKEN = "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
+
+
+# TOKEN = "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
 
 # create the app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-@app.route("/")
-def index():
-    return "ربات فعال است ✅"
-
-# این رو تلگرام صدا می‌زنه وقتی پیام جدید بیاد
-@app.route(f"/{TOKEN}", methods=["POST"])
-async def webhook():
-    update = Update.de_json(data=request.get_json(force=True), bot=app_telegram.bot)
-    await app_telegram.process_update(update)
-    return "ok"
-
-# تنظیم Webhook در اجرای اولیه
-async def set_webhook():
-    webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
-    await app_telegram.bot.set_webhook(webhook_url)
-
-# اجرای تنظیم Webhook
-@app.before_first_request
-def before_first_request():
-    asyncio.get_event_loop().create_task(set_webhook())
-
 
 
 # configure the database - PostgreSQL
@@ -222,6 +202,22 @@ def database_status():
             "message": str(e)
         }), 500
 
+# Webhook endpoint برای Telegram
+@app.route(f"/{TOKEN}", methods=["POST"])
+async def webhook():
+    update = Update.de_json(data=request.get_json(force=True), bot=bot_instance.application.bot)
+    await bot_instance.application.process_update(update)
+    return "ok"
+
+# تنظیم Webhook
+async def set_webhook():
+    webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
+    await bot_instance.application.bot.set_webhook(webhook_url)
+
+@app.before_first_request
+def before_first_request():
+    asyncio.get_event_loop().create_task(set_webhook())
+
 def init_services():
     """Initialize services after app context is available"""
     global analytics_service, bot_instance
@@ -280,10 +276,13 @@ def start_bot():
         if analytics_service is None:
             with app.app_context():
                 init_services()
+                from bot import TelegramBot
+                app_telegram = TelegramBot(db, analytics_service).application
+
 
         from bot import TelegramBot
         bot_instance = TelegramBot(db, analytics_service)
-        bot_instance.start()
+        # bot_instance.start()
     except Exception as e:
         logging.error(f"Failed to start Telegram bot: {e}")
 
@@ -333,8 +332,8 @@ if __name__ == '__main__':
     app = create_app()
 
 
-    bot = TelegramBot(db=db_instance, analytics_service=analytics_instance)
-    asyncio.run(bot.application.run_polling())
+    # bot = TelegramBot(db=db_instance, analytics_service=analytics_instance)
+    # asyncio.run(bot.application.run_polling())
 
     # Start the Flask app
     app.run(host='0.0.0.0', port=5000, debug=True)
