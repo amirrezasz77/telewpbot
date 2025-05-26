@@ -9,3 +9,4 @@ gunicorn
 aiogram[fast]
 quart
 quart-sqlalchemy
+uvloop==0.17.0
