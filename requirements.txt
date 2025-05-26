@@ -1,6 +1,6 @@
 python-telegram-bot==20.7
-quart==0.19.4
-quart-sqlalchemy
+quart==0.18.3
+quart-sqlalchemy==3.0.3
 hypercorn==0.14.4
 uvloop==0.17.0
 python-dotenv
@@ -8,4 +8,5 @@ openai
 woocommerce
 requests
 aiogram==3.4.1
-# werkzeug حذف شده یا ارتقا داده شده
+werkzeug==2.3.7
+blinker==1.6.2
