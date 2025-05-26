@@ -202,18 +202,16 @@ def database_status():
             "message": str(e)
         }), 500
 
-# Webhook endpoint برای Telegram
 @app.route(f"/{TOKEN}", methods=["POST"])
- def webhook():
+def webhook():
     update = Update.de_json(data=request.get_json(force=True), bot=bot_instance.application.bot)
-    await bot_instance.application.process_update(update)
+    asyncio.get_event_loop().create_task(bot_instance.application.process_update(update))
     return "ok"
 
 # تنظیم Webhook
- def set_webhook():
+def set_webhook():
     webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
-    await bot_instance.application.bot.set_webhook(webhook_url)
-
+    asyncio.run(bot_instance.application.bot.set_webhook(webhook_url))
 
 def init_services():
     """Initialize services after app context is available"""
