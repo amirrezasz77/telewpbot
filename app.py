@@ -61,6 +61,11 @@ def ai_config_page():
     """AI configuration page"""
     return render_template('ai_config.html')
 
+@app.route('/woocommerce-config')
+def woocommerce_config_page():
+    """WooCommerce configuration page"""
+    return render_template('woocommerce_config.html')
+
 @app.route('/database')
 def database_page():
     """Database management page"""

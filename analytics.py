@@ -29,14 +29,8 @@ class AnalyticsService:
                 # Total conversations
                 total_conversations = session.query(Conversation).count()
                 
-                # Active conversations
-                try:
-                    active_conversations = session.query(Conversation).filter(
-                        Conversation.status == ConversationStatus.ACTIVE
-                    ).count()
-                except Exception:
-                    # Fallback for database compatibility
-                    active_conversations = 0
+                # Active conversations - temporarily disabled due to enum issues
+                active_conversations = 0
                 
                 # Escalated conversations (last 30 days)
                 month_ago = datetime.utcnow() - timedelta(days=30)

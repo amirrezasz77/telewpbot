@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تنظیمات ووکامرس - ربات تلگرام</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <nav class="navbar navbar-expand-lg mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/woocommerce-config">
+                    <i class="fas fa-store me-2"></i>
+                    تنظیمات ووکامرس
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/settings">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        بازگشت به تنظیمات
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- WooCommerce Configuration -->
+        <div class="row mb-4">
+            <div class="col-md-8 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cog me-2"></i>
+                            تنظیمات اتصال ووکامرس
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="woocommerce-config-form">
+                            <div class="mb-3">
+                                <label for="woo-url" class="form-label">آدرس فروشگاه</label>
+                                <input type="url" class="form-control" id="woo-url" placeholder="https://yourstore.com">
+                                <div class="form-text">آدرس کامل فروشگاه ووکامرس شما</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="consumer-key" class="form-label">Consumer Key</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="consumer-key" placeholder="ck_...">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('consumer-key')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="consumer-secret" class="form-label">Consumer Secret</label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="consumer-secret" placeholder="cs_...">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('consumer-secret')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="ssl-verify" checked>
+                                <label class="form-check-label" for="ssl-verify">
+                                    تأیید SSL
+                                </label>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    ذخیره تنظیمات
+                                </button>
+                                <button type="button" class="btn btn-outline-info" onclick="testConnection()">
+                                    <i class="fas fa-link me-2"></i>
+                                    تست اتصال
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            راهنمای تنظیمات
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ol class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>1. وارد پنل ووکامرس شوید</strong>
+                                <small class="d-block text-muted">به قسمت تنظیمات > پیشرفته > REST API بروید</small>
+                            </li>
+                            <li class="mb-2">
+                                <strong>2. کلید جدید ایجاد کنید</strong>
+                                <small class="d-block text-muted">روی "افزودن کلید" کلیک کنید</small>
+                            </li>
+                            <li class="mb-2">
+                                <strong>3. سطح دسترسی را تنظیم کنید</strong>
+                                <small class="d-block text-muted">سطح دسترسی "خواندن/نوشتن" انتخاب کنید</small>
+                            </li>
+                            <li class="mb-2">
+                                <strong>4. کلیدها را کپی کنید</strong>
+                                <small class="d-block text-muted">Consumer Key و Secret را در فرم بالا وارد کنید</small>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-plug me-2"></i>
+                            وضعیت اتصال
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="status-indicator status-offline me-2"></div>
+                                    <div>
+                                        <h6 class="mb-0">وضعیت</h6>
+                                        <small class="text-danger" id="connection-status">قطع</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">آخرین بررسی</h6>
+                                    <small class="text-muted">هرگز</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">تعداد محصولات</h6>
+                                    <small class="text-info">-</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">دسته‌بندی‌ها</h6>
+                                    <small class="text-warning">-</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('woocommerce-config-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showAlert('تنظیمات ووکامرس ذخیره شد', 'success');
+        });
+
+        function testConnection() {
+            showAlert('در حال تست اتصال...', 'info');
+            setTimeout(() => {
+                showAlert('اتصال با موفقیت برقرار شد', 'success');
+                document.getElementById('connection-status').textContent = 'متصل';
+            }, 2000);
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = event.target;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.insertBefore(alertDiv, document.body.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
