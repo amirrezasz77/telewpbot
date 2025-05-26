@@ -7,8 +7,8 @@ woocommerce
 requests
 gunicorn
 aiogram
+quart==0.19.4
 quart-sqlalchemy
 uvloop==0.17.0
 werkzeug==2.3.7
-quart>=0.18.0
-hypercorn>=0.14.4
+hypercorn==0.14.4
