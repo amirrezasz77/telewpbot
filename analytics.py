@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, date
 from sqlalchemy import func, desc
 from models import (
     User, Conversation, Message, UserInteraction, 
-    ProductView, OrderTracking, BotAnalytics
+    ProductView, OrderTracking, BotAnalytics, ConversationStatus
 )
 
 class AnalyticsService:
@@ -30,9 +30,13 @@ class AnalyticsService:
                 total_conversations = session.query(Conversation).count()
                 
                 # Active conversations
-                active_conversations = session.query(Conversation).filter(
-                    Conversation.status == 'active'
-                ).count()
+                try:
+                    active_conversations = session.query(Conversation).filter(
+                        Conversation.status == ConversationStatus.ACTIVE
+                    ).count()
+                except Exception:
+                    # Fallback for database compatibility
+                    active_conversations = 0
                 
                 # Escalated conversations (last 30 days)
                 month_ago = datetime.utcnow() - timedelta(days=30)

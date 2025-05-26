@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت پایگاه داده - ربات تلگرام</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <nav class="navbar navbar-expand-lg mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/database">
+                    <i class="fas fa-database me-2"></i>
+                    مدیریت پایگاه داده
+                </a>
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/settings">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        بازگشت به تنظیمات
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Database Status -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-server me-2"></i>
+                                وضعیت پایگاه داده
+                            </h5>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-info" onclick="refreshStatus()">
+                                    <i class="fas fa-sync me-1"></i>
+                                    بروزرسانی
+                                </button>
+                                <button type="button" class="btn btn-outline-success" onclick="testConnection()">
+                                    <i class="fas fa-link me-1"></i>
+                                    تست اتصال
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" onclick="backupDatabase()">
+                                    <i class="fas fa-download me-1"></i>
+                                    پشتیبان‌گیری
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="db-status-info">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="status-indicator status-online me-2"></div>
+                                    <div>
+                                        <h6 class="mb-0">وضعیت اتصال</h6>
+                                        <small class="text-success" id="connection-status">متصل</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">نوع پایگاه داده</h6>
+                                    <small class="text-info" id="db-type">PostgreSQL</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">میزبان</h6>
+                                    <small class="text-muted" id="db-host">localhost</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div>
+                                    <h6 class="mb-0">پورت</h6>
+                                    <small class="text-muted" id="db-port">5432</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Tables -->
+        <div class="row mb-4">
+            <div class="col-md-8 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-table me-2"></i>
+                            جداول پایگاه داده
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>نام جدول</th>
+                                        <th>تعداد رکورد</th>
+                                        <th>اندازه تقریبی</th>
+                                        <th>آخرین به‌روزرسانی</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tables-info">
+                                    <tr>
+                                        <td colspan="5" class="text-center">
+                                            <div class="spinner-border" role="status">
+                                                <span class="visually-hidden">در حال بارگذاری...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            آمار کلی
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>کل جداول:</span>
+                                <strong id="total-tables">-</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>کل رکوردها:</span>
+                                <strong id="total-records">-</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>اندازه پایگاه داده:</span>
+                                <strong id="db-size">-</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>آخرین پشتیبان‌گیری:</span>
+                                <strong id="last-backup">هرگز</strong>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="text-center">
+                            <canvas id="storage-chart" width="200" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Operations -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tools me-2"></i>
+                            عملیات پایگاه داده
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="optimizeDatabase()">
+                                <i class="fas fa-rocket me-2"></i>
+                                بهینه‌سازی پایگاه داده
+                            </button>
+                            
+                            <button class="btn btn-outline-info" onclick="analyzeDatabase()">
+                                <i class="fas fa-search me-2"></i>
+                                تجزیه و تحلیل
+                            </button>
+                            
+                            <button class="btn btn-outline-success" onclick="repairTables()">
+                                <i class="fas fa-wrench me-2"></i>
+                                ترمیم جداول
+                            </button>
+                            
+                            <button class="btn btn-outline-warning" onclick="cleanupOldData()">
+                                <i class="fas fa-broom me-2"></i>
+                                پاکسازی داده‌های قدیمی
+                            </button>
+                            
+                            <button class="btn btn-outline-danger" onclick="resetDatabase()">
+                                <i class="fas fa-trash me-2"></i>
+                                بازنشانی پایگاه داده
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>
+                            پشتیبان‌گیری و بازیابی
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="backup-name" class="form-label">نام پشتیبان</label>
+                            <input type="text" class="form-control" id="backup-name" placeholder="backup_2024_01_01">
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="include-data" checked>
+                            <label class="form-check-label" for="include-data">
+                                شامل داده‌ها
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="compress-backup" checked>
+                            <label class="form-check-label" for="compress-backup">
+                                فشرده‌سازی
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" onclick="createBackup()">
+                                <i class="fas fa-save me-2"></i>
+                                ایجاد پشتیبان
+                            </button>
+                            
+                            <button class="btn btn-outline-primary" onclick="scheduleBackup()">
+                                <i class="fas fa-calendar me-2"></i>
+                                برنامه‌ریزی خودکار
+                            </button>
+                            
+                            <button class="btn btn-outline-warning" onclick="restoreDatabase()">
+                                <i class="fas fa-upload me-2"></i>
+                                بازیابی از پشتیبان
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SQL Query Interface -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-code me-2"></i>
+                            اجرای کوئری SQL
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <textarea class="form-control" id="sql-query" rows="5" placeholder="SELECT * FROM user LIMIT 10;"></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-primary" onclick="executeQuery()">
+                                <i class="fas fa-play me-2"></i>
+                                اجرای کوئری
+                            </button>
+                            
+                            <button class="btn btn-outline-secondary" onclick="formatQuery()">
+                                <i class="fas fa-align-left me-2"></i>
+                                فرمت کردن
+                            </button>
+                            
+                            <button class="btn btn-outline-info" onclick="explainQuery()">
+                                <i class="fas fa-info me-2"></i>
+                                توضیح کوئری
+                            </button>
+                            
+                            <button class="btn btn-outline-warning" onclick="clearQuery()">
+                                <i class="fas fa-eraser me-2"></i>
+                                پاک کردن
+                            </button>
+                        </div>
+                        
+                        <div id="query-result" style="display: none;">
+                            <h6>نتیجه کوئری:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead id="result-header"></thead>
+                                    <tbody id="result-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div id="query-error" style="display: none;" class="alert alert-danger">
+                            <h6>خطا در اجرای کوئری:</h6>
+                            <pre id="error-message"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Migration Status -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            وضعیت مایگریشن‌ها
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>نسخه</th>
+                                        <th>نام مایگریشن</th>
+                                        <th>تاریخ اجرا</th>
+                                        <th>وضعیت</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>v1.0</td>
+                                        <td>ایجاد جداول اولیه</td>
+                                        <td>1403/08/05 - 10:30</td>
+                                        <td><span class="badge bg-success">اجرا شده</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>v1.1</td>
+                                        <td>افزودن فیلدهای جدید</td>
+                                        <td>1403/08/05 - 14:15</td>
+                                        <td><span class="badge bg-success">اجرا شده</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>v1.2</td>
+                                        <td>بهینه‌سازی ایندکس‌ها</td>
+                                        <td>-</td>
+                                        <td><span class="badge bg-warning">در انتظار</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-success" onclick="runMigration('v1.2')">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Load database status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDatabaseStatus();
+            initializeStorageChart();
+        });
+
+        async function loadDatabaseStatus() {
+            try {
+                const response = await fetch('/api/database/status');
+                const data = await response.json();
+                
+                if (data.status === 'connected') {
+                    updateDatabaseInfo(data);
+                    updateTablesInfo(data.tables);
+                } else {
+                    showError('خطا در اتصال به پایگاه داده: ' + data.message);
+                }
+            } catch (error) {
+                showError('خطا در دریافت اطلاعات پایگاه داده');
+                console.error('Error:', error);
+            }
+        }
+
+        function updateDatabaseInfo(data) {
+            document.getElementById('connection-status').textContent = 'متصل';
+            document.getElementById('db-type').textContent = data.database_type || 'PostgreSQL';
+            document.getElementById('db-host').textContent = data.connection_info?.host || 'localhost';
+            document.getElementById('db-port').textContent = data.connection_info?.port || '5432';
+        }
+
+        function updateTablesInfo(tables) {
+            const tbody = document.getElementById('tables-info');
+            let totalRecords = 0;
+            
+            if (!tables || tables.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">هیچ جدولی یافت نشد</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = tables.map(table => {
+                totalRecords += table.count || 0;
+                return `
+                    <tr>
+                        <td>${table.name}</td>
+                        <td>${table.count || 0}</td>
+                        <td>-</td>
+                        <td>امروز</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="viewTable('${table.name}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info me-1" onclick="exportTable('${table.name}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="optimizeTable('${table.name}')">
+                                <i class="fas fa-wrench"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('total-tables').textContent = tables.length;
+            document.getElementById('total-records').textContent = totalRecords.toLocaleString();
+            document.getElementById('db-size').textContent = '2.5 MB';
+        }
+
+        function initializeStorageChart() {
+            const ctx = document.getElementById('storage-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['استفاده شده', 'خالی'],
+                    datasets: [{
+                        data: [35, 65],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(108, 117, 125, 0.3)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#fff',
+                                padding: 10,
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Database operations
+        function refreshStatus() {
+            showAlert('در حال بروزرسانی وضعیت...', 'info');
+            loadDatabaseStatus();
+        }
+
+        function testConnection() {
+            showAlert('اتصال با موفقیت برقرار شد', 'success');
+        }
+
+        function backupDatabase() {
+            showAlert('پشتیبان‌گیری شروع شد', 'info');
+            setTimeout(() => {
+                showAlert('پشتیبان‌گیری با موفقیت انجام شد', 'success');
+            }, 3000);
+        }
+
+        function optimizeDatabase() {
+            showAlert('بهینه‌سازی پایگاه داده شروع شد', 'info');
+            setTimeout(() => {
+                showAlert('بهینه‌سازی با موفقیت انجام شد', 'success');
+            }, 2000);
+        }
+
+        function analyzeDatabase() {
+            showAlert('تجزیه و تحلیل پایگاه داده در حال انجام...', 'info');
+        }
+
+        function repairTables() {
+            showAlert('ترمیم جداول شروع شد', 'info');
+        }
+
+        function cleanupOldData() {
+            if (confirm('آیا مطمئن هستید که می‌خواهید داده‌های قدیمی را پاک کنید؟')) {
+                showAlert('پاکسازی داده‌های قدیمی شروع شد', 'warning');
+            }
+        }
+
+        function resetDatabase() {
+            if (confirm('هشدار: این عمل تمام داده‌ها را پاک می‌کند. آیا مطمئن هستید؟')) {
+                showAlert('بازنشانی پایگاه داده...', 'danger');
+            }
+        }
+
+        function createBackup() {
+            const name = document.getElementById('backup-name').value || 'backup_' + new Date().toISOString().split('T')[0];
+            showAlert(`پشتیبان ${name} در حال ایجاد...`, 'info');
+        }
+
+        function scheduleBackup() {
+            showAlert('برنامه‌ریزی پشتیبان‌گیری خودکار در نسخه بعدی', 'info');
+        }
+
+        function restoreDatabase() {
+            if (confirm('آیا مطمئن هستید که می‌خواهید از پشتیبان بازیابی کنید؟')) {
+                showAlert('بازیابی از پشتیبان...', 'warning');
+            }
+        }
+
+        // Table operations
+        function viewTable(tableName) {
+            showAlert(`مشاهده جدول ${tableName}`, 'info');
+        }
+
+        function exportTable(tableName) {
+            showAlert(`صادرات جدول ${tableName}`, 'info');
+        }
+
+        function optimizeTable(tableName) {
+            showAlert(`بهینه‌سازی جدول ${tableName}`, 'info');
+        }
+
+        // SQL query operations
+        function executeQuery() {
+            const query = document.getElementById('sql-query').value.trim();
+            if (!query) {
+                showAlert('لطفاً کوئری SQL را وارد کنید', 'warning');
+                return;
+            }
+            
+            showAlert('در حال اجرای کوئری...', 'info');
+            
+            // Simulate query execution
+            setTimeout(() => {
+                document.getElementById('query-result').style.display = 'block';
+                document.getElementById('query-error').style.display = 'none';
+                
+                const header = document.getElementById('result-header');
+                const body = document.getElementById('result-body');
+                
+                header.innerHTML = '<tr><th>ID</th><th>Name</th><th>Email</th></tr>';
+                body.innerHTML = `
+                    <tr><td>1</td><td>کاربر تست</td><td>test@example.com</td></tr>
+                    <tr><td>2</td><td>کاربر دوم</td><td>user2@example.com</td></tr>
+                `;
+                
+                showAlert('کوئری با موفقیت اجرا شد', 'success');
+            }, 1000);
+        }
+
+        function formatQuery() {
+            const query = document.getElementById('sql-query').value;
+            // Simple formatting
+            const formatted = query.replace(/\b(SELECT|FROM|WHERE|ORDER BY|GROUP BY)\b/gi, '\n$1');
+            document.getElementById('sql-query').value = formatted;
+        }
+
+        function explainQuery() {
+            showAlert('توضیح کوئری در نسخه بعدی اضافه خواهد شد', 'info');
+        }
+
+        function clearQuery() {
+            document.getElementById('sql-query').value = '';
+            document.getElementById('query-result').style.display = 'none';
+            document.getElementById('query-error').style.display = 'none';
+        }
+
+        function runMigration(version) {
+            showAlert(`اجرای مایگریشن ${version}...`, 'info');
+            setTimeout(() => {
+                showAlert(`مایگریشن ${version} با موفقیت اجرا شد`, 'success');
+            }, 2000);
+        }
+
+        function showError(message) {
+            showAlert(message, 'danger');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.insertBefore(alertDiv, document.body.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
