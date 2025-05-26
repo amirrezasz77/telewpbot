@@ -1,7 +1,14 @@
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import declarative_base, sessionmaker
+import os
 
-class Base(DeclarativeBase):
-    pass
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///telegram_bot.db")
 
-db = SQLAlchemy(model_class=Base)
+engine = create_async_engine(DATABASE_URL, echo=True)
+AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+Base = declarative_base()
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
