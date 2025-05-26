@@ -379,14 +379,14 @@ async def create_app():
     return app
 
 
-if __name__ == '__main__':
-    # Create the application
-    app = create_app()
+# if __name__ == '__main__':
+#     # Create the application
+#     app = create_app()
 
 
-    # bot = TelegramBot(db=db_instance, analytics_service=analytics_instance)
-    # asyncio.run(bot.application.run_polling())
+#     # bot = TelegramBot(db=db_instance, analytics_service=analytics_instance)
+#     # asyncio.run(bot.application.run_polling())
 
-    # Start the Flask app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+#     # Start the Flask app
+#     # app.run(host='0.0.0.0', port=5000, debug=True)
 
