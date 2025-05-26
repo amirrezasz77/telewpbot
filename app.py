@@ -9,6 +9,7 @@ import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 TOKEN = os.getenv("BOT_TOKEN") or "7540724852:AAG-TfeGVGmssW4K3MLKkyiwwOyyqlsCGPI"
+from aiogram.types import Update
 
 
 
@@ -202,15 +203,12 @@ def database_status():
             "message": str(e)
         }), 500
 
-@app.route(f'/{TOKEN}', methods=['POST'])
+@app.route(f"/{TOKEN}", methods=["POST"])
 async def webhook():
-    try:
-        data = await request.get_json()
-        update = Update.model_validate(data)
-        await dp._process_update(update)
-    except Exception as e:
-        print("Webhook processing error:", e)
-    return "ok", 200
+    data = await request.get_json()
+    update = Update.model_validate(data)  # مهم
+    await dp._process_update(update)      # نه روی dict
+    return "ok"
 
 async def on_startup():
     webhook_url = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
