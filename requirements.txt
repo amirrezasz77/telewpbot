@@ -9,3 +9,4 @@ requests
 gunicorn
 aiogram[fast]
 quart
+quart-migrate
