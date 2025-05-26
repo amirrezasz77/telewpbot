@@ -30,6 +30,11 @@ class Config:
     AI_MAX_TOKENS = 1000
     AI_TEMPERATURE = 0.7
     
+    # Local AI Configuration
+    USE_LOCAL_AI = os.environ.get('USE_LOCAL_AI', 'False').lower() == 'true'
+    OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://localhost:11434')
+    LOCAL_AI_MODEL = os.environ.get('LOCAL_AI_MODEL', 'llama3.2')
+    
     # Languages
     DEFAULT_LANGUAGE = 'fa'  # Persian/Farsi
     SUPPORTED_LANGUAGES = ['fa', 'en']

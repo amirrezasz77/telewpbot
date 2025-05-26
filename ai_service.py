@@ -3,22 +3,41 @@ import os
 import logging
 from typing import Dict, Optional, List
 from openai import OpenAI
+import requests
 from config import Config, MESSAGES
 
 class AIService:
     """AI service for handling customer conversations"""
     
     def __init__(self):
-        self.api_key = Config.OPENAI_API_KEY
-        if not self.api_key:
-            raise ValueError("OpenAI API key is not configured")
+        self.use_local_ai = Config.USE_LOCAL_AI
+        self.ollama_url = Config.OLLAMA_URL
+        self.local_model = Config.LOCAL_AI_MODEL
         
-        self.client = OpenAI(api_key=self.api_key)
-        self.model = Config.AI_MODEL  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        if self.use_local_ai:
+            # Test Ollama connection
+            try:
+                response = requests.get(f"{self.ollama_url}/api/tags", timeout=5)
+                if response.status_code == 200:
+                    logging.info(f"AI Service initialized with local Ollama model: {self.local_model}")
+                else:
+                    logging.warning("Ollama not available, falling back to OpenAI")
+                    self.use_local_ai = False
+            except requests.exceptions.RequestException:
+                logging.warning("Ollama not available, falling back to OpenAI")
+                self.use_local_ai = False
+        
+        if not self.use_local_ai:
+            self.api_key = Config.OPENAI_API_KEY
+            if not self.api_key:
+                raise ValueError("Neither local AI nor OpenAI API key is configured")
+            
+            self.client = OpenAI(api_key=self.api_key)
+            self.model = Config.AI_MODEL
+            logging.info("AI Service initialized with OpenAI GPT-4o")
+        
         self.max_tokens = Config.AI_MAX_TOKENS
         self.temperature = Config.AI_TEMPERATURE
-        
-        logging.info("AI Service initialized with OpenAI GPT-4o")
     
     def generate_response(self, user_message: str, conversation_context: List[Dict] = None, language: str = 'fa') -> Dict:
         """
@@ -33,32 +52,109 @@ class AIService:
             Dict with 'response', 'confidence', 'should_escalate', 'intent'
         """
         try:
-            # Build conversation history
-            messages = self._build_conversation_context(user_message, conversation_context, language)
-            
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                response_format={"type": "json_object"}
-            )
-            
-            # Parse AI response
-            ai_response = json.loads(response.choices[0].message.content)
-            
-            # Validate and structure response
-            return {
-                'response': ai_response.get('response', ''),
-                'confidence': max(0.0, min(1.0, ai_response.get('confidence', 0.5))),
-                'should_escalate': ai_response.get('should_escalate', False),
-                'intent': ai_response.get('intent', 'general_inquiry'),
-                'suggested_actions': ai_response.get('suggested_actions', [])
-            }
+            if self.use_local_ai:
+                return self._generate_local_response(user_message, conversation_context, language)
+            else:
+                return self._generate_openai_response(user_message, conversation_context, language)
             
         except Exception as e:
             logging.error(f"AI service error: {e}")
             return self._fallback_response(language)
+    
+    def _generate_openai_response(self, user_message: str, conversation_context: List[Dict], language: str) -> Dict:
+        """Generate response using OpenAI"""
+        # Build conversation history
+        messages = self._build_conversation_context(user_message, conversation_context, language)
+        
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            response_format={"type": "json_object"}
+        )
+        
+        # Parse AI response
+        ai_response = json.loads(response.choices[0].message.content)
+        
+        # Validate and structure response
+        return {
+            'response': ai_response.get('response', ''),
+            'confidence': max(0.0, min(1.0, ai_response.get('confidence', 0.5))),
+            'should_escalate': ai_response.get('should_escalate', False),
+            'intent': ai_response.get('intent', 'general_inquiry'),
+            'suggested_actions': ai_response.get('suggested_actions', [])
+        }
+    
+    def _generate_local_response(self, user_message: str, conversation_context: List[Dict], language: str) -> Dict:
+        """Generate response using local Ollama"""
+        # Build conversation context
+        prompt = self._build_local_prompt(user_message, conversation_context, language)
+        
+        # Make request to Ollama
+        ollama_request = {
+            "model": self.local_model,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": self.temperature,
+                "num_predict": self.max_tokens
+            }
+        }
+        
+        response = requests.post(
+            f"{self.ollama_url}/api/generate",
+            json=ollama_request,
+            timeout=30
+        )
+        
+        if response.status_code != 200:
+            raise Exception(f"Ollama request failed: {response.status_code}")
+        
+        ollama_response = response.json()
+        response_text = ollama_response.get('response', '')
+        
+        # Try to parse as JSON, fallback to plain text
+        try:
+            ai_response = json.loads(response_text)
+            return {
+                'response': ai_response.get('response', response_text),
+                'confidence': max(0.0, min(1.0, ai_response.get('confidence', 0.7))),
+                'should_escalate': ai_response.get('should_escalate', False),
+                'intent': ai_response.get('intent', 'general_inquiry'),
+                'suggested_actions': ai_response.get('suggested_actions', [])
+            }
+        except json.JSONDecodeError:
+            # If not JSON, treat as plain response
+            return {
+                'response': response_text,
+                'confidence': 0.7,
+                'should_escalate': False,
+                'intent': 'general_inquiry',
+                'suggested_actions': []
+            }
+    
+    def _build_local_prompt(self, user_message: str, context: List[Dict], language: str) -> str:
+        """Build prompt for local AI model"""
+        system_prompt = self._get_system_prompt(language)
+        
+        # Build conversation history
+        conversation_history = ""
+        if context:
+            for msg in context[-5:]:  # Last 5 messages for local AI
+                role = "کاربر" if msg.get('is_from_user') else "دستیار"
+                if language == 'en':
+                    role = "User" if msg.get('is_from_user') else "Assistant"
+                conversation_history += f"{role}: {msg.get('content', '')}\n"
+        
+        # Create full prompt
+        full_prompt = f"""{system_prompt}
+
+{conversation_history}
+{"کاربر" if language == 'fa' else "User"}: {user_message}
+{"دستیار" if language == 'fa' else "Assistant"}:"""
+        
+        return full_prompt
     
     def _build_conversation_context(self, user_message: str, context: List[Dict], language: str) -> List[Dict]:
         """Build conversation context for AI model"""
