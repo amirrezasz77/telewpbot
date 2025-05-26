@@ -2,10 +2,10 @@ python-telegram-bot==20.7
 quart==0.19.4
 quart-sqlalchemy
 hypercorn==0.14.4
-werkzeug==2.3.7
 uvloop==0.17.0
 python-dotenv
 openai
 woocommerce
 requests
 aiogram==3.4.1
+# werkzeug حذف شده یا ارتقا داده شده
