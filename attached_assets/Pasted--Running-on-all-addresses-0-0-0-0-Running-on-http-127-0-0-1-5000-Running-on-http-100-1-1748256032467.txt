@@ -1,0 +1,68 @@
+ Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://100.127.255.253:5000
+INFO:werkzeug:Press CTRL+C to quit   
+INFO:werkzeug: * Restarting with stat
+ERROR:root:Failed to start Telegram bot: Telegram bot token is not configured
+INFO:root:Analytics service initialized
+WARNING:werkzeug: * Debugger is active!
+INFO:werkzeug: * Debugger PIN: 733-120-160
+INFO:root:AI Service initialized with OpenAI GPT-4o
+INFO:root:WooCommerce API initialized for: https://tabrizchasb.ir
+DEBUG:telegram.ext.ExtBot:Set Bot API URL: https://api.telegram.org/bot7540724852:AAGO95V0DxoHwuqN9Zc8nUUIc0AGIlE9gsE
+DEBUG:telegram.ext.ExtBot:Set Bot API File URL: https://api.telegram.org/file/bot7540724852:AAGO95V0DxoHwuqN9Zc8nUUIc0AGIlE9gsE
+INFO:root:Telegram bot initialized
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:root:Analytics service initialized
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:root:Starting Telegram bot...
+DEBUG:telegram.ext.ExtBot:Calling Bot API endpoint `getMe` with parameters `{}`
+DEBUG:httpcore.connection:connect_tcp.started host='api.telegram.org' port=443 local_address=None timeout=5.0 socket_options=None
+DEBUG:httpcore.connection:connect_tcp.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x000001EB7E9CCC20>
+DEBUG:httpcore.connection:start_tls.started ssl_context=<ssl.SSLContext object at 0x000001EB7E981450> server_hostname='api.telegram.org' timeout=5.0        
+DEBUG:httpcore.connection:start_tls.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x000001EB7E9CC860>
+DEBUG:httpcore.http11:send_request_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_headers.complete 
+DEBUG:httpcore.http11:send_request_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_body.complete    
+DEBUG:httpcore.http11:receive_response_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Server', b'nginx/1.18.0'), (b'Date', b'Mon, 26 May 2025 10:40:21 GMT'), (b'Content-Type', b'application/json'), (b'Content-Length', b'261'), (b'Connection', b'keep-alive'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'Access-Control-Allow-Origin', b'*'), (b'Access-Control-Allow-Methods', b'GET, POST, OPTIONS'), (b'Access-Control-Expose-Headers', b'Content-Length,Content-Type,Date,Server,Connection')])
+INFO:httpx:HTTP Request: POST https://api.telegram.org/bot7540724852:AAGO95V0DxoHwuqN9Zc8nUUIc0AGIlE9gsE/getMe "HTTP/1.1 200 OK"
+DEBUG:httpcore.http11:receive_response_body.started 
+request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_body.completeDEBUG:httpcore.http11:response_closed.started       
+DEBUG:httpcore.http11:response_closed.complete      
+DEBUG:telegram.ext.ExtBot:Call to Bot API endpoint `getMe` finished with return value `{'id': 7540724852, 'is_bot': True, 'first_name': 'Test amirszdev', 'username': 'Amirsz_dev_testbot', 'can_join_groups': True, 'can_read_all_group_messages': True, 'supports_inline_queries': False, 'can_connect_to_business': False, 'has_main_web_app': False}`
+DEBUG:telegram.ext.ExtBot:This Bot is already initialized.
+INFO:telegram.ext.Application:Application started   
+DEBUG:telegram.ext.Updater:Updater started (polling)DEBUG:telegram.ext:Network Retry Loop (Bootstrap delete Webhook): Starting
+DEBUG:telegram.ext.Updater:Deleting webhook
+DEBUG:telegram.ext.Updater:Dropping pending updates 
+from Telegram server
+DEBUG:telegram.ext.ExtBot:Calling Bot API endpoint `deleteWebhook` with parameters `{'drop_pending_updates': True}`
+DEBUG:httpcore.http11:send_request_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_headers.complete 
+DEBUG:httpcore.http11:send_request_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_body.complete    
+DEBUG:httpcore.http11:receive_response_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Server', b'nginx/1.18.0'), (b'Date', b'Mon, 26 May 2025 10:40:22 GMT'), (b'Content-Type', b'application/json'), (b'Content-Length', b'68'), (b'Connection', b'keep-alive'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'Access-Control-Allow-Origin', b'*'), (b'Access-Control-Allow-Methods', b'GET, POST, OPTIONS'), (b'Access-Control-Expose-Headers', b'Content-Length,Content-Type,Date,Server,Connection')])
+INFO:httpx:HTTP Request: POST https://api.telegram.org/bot7540724852:AAGO95V0DxoHwuqN9Zc8nUUIc0AGIlE9gsE/deleteWebhook "HTTP/1.1 200 OK"
+DEBUG:httpcore.http11:receive_response_body.started 
+request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_body.completeDEBUG:httpcore.http11:response_closed.started       
+DEBUG:httpcore.http11:response_closed.complete      
+DEBUG:telegram.ext.ExtBot:Call to Bot API endpoint `deleteWebhook` finished with return value `True`    
+DEBUG:telegram.ext.Updater:Bootstrap done
+DEBUG:telegram.ext.Updater:Waiting for polling to start
+DEBUG:telegram.ext.Updater:Polling updates from Telegram started
+DEBUG:telegram.ext:Network Retry Loop (Polling Updates): Starting
+DEBUG:telegram.ext.ExtBot:Calling Bot API endpoint `getUpdates` with parameters `{'timeout': 10, 'offset': 0}`
+DEBUG:httpcore.connection:connect_tcp.started host='api.telegram.org' port=443 local_address=None timeout=5.0 socket_options=None
+DEBUG:httpcore.connection:connect_tcp.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x000001EB7EA1F4D0>
+DEBUG:httpcore.connection:start_tls.started ssl_context=<ssl.SSLContext object at 0x000001EB7E9816D0> server_hostname='api.telegram.org' timeout=5.0        
+DEBUG:httpcore.connection:start_tls.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x000001EB7EA1F410>
+DEBUG:httpcore.http11:send_request_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_headers.complete 
+DEBUG:httpcore.http11:send_request_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_body.complete    
+DEBUG:httpcore.http11:receive_response_headers.started request=<Request [b'POST']>
