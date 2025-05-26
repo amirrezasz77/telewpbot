@@ -1,3 +1,4 @@
+
 import logging
 import asyncio
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
@@ -53,32 +54,42 @@ class TelegramBot:
 
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /start command"""
-        user = await self._get_or_create_user(update.effective_user)
-        language = user.language_code or 'fa'
+        try:
+            user = await self._get_or_create_user(update.effective_user)
+            language = user.language_code or 'fa'
 
-        # Send welcome message
-        welcome_message = MESSAGES[language]['welcome']
-        await update.message.reply_text(welcome_message)
+            # Send welcome message
+            welcome_message = MESSAGES[language]['welcome']
+            await update.message.reply_text(welcome_message)
 
-        # Show main menu
-        await self._show_main_menu(update, language)
+            # Show main menu
+            await self._show_main_menu(update, language)
 
-        # Track interaction
-        await self._track_interaction(user.id, 'bot_start')
+            # Track interaction
+            await self._track_interaction(user.id, 'bot_start')
+
+        except Exception as e:
+            logging.error(f"Error in start_command: {e}")
+            await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
 
     async def main_menu_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /menu command"""
-        user = await self._get_or_create_user(update.effective_user)
-        language = user.language_code or 'fa'
-        await self._show_main_menu(update, language)
+        try:
+            user = await self._get_or_create_user(update.effective_user)
+            language = user.language_code or 'fa'
+            await self._show_main_menu(update, language)
+        except Exception as e:
+            logging.error(f"Error in main_menu_command: {e}")
+            await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
 
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
-        user = await self._get_or_create_user(update.effective_user)
-        language = user.language_code or 'fa'
+        try:
+            user = await self._get_or_create_user(update.effective_user)
+            language = user.language_code or 'fa'
 
-        if language == 'fa':
-            help_text = """
+            if language == 'fa':
+                help_text = """
 🤖 راهنمای استفاده از ربات
 
 📋 دستورات اصلی:
@@ -95,8 +106,8 @@ class TelegramBot:
 
 💬 فقط پیام خود را بنویسید و من پاسخ خواهم داد!
 """
-        else:
-            help_text = """
+            else:
+                help_text = """
 🤖 Bot Usage Guide
 
 📋 Main Commands:
@@ -114,147 +125,168 @@ class TelegramBot:
 💬 Just type your message and I'll respond!
 """
 
-        await update.message.reply_text(help_text)
+            await update.message.reply_text(help_text)
+        except Exception as e:
+            logging.error(f"Error in help_command: {e}")
+            await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
 
     async def support_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /support command"""
-        user = await self._get_or_create_user(update.effective_user)
-        language = user.language_code or 'fa'
-
-        await self._escalate_to_human(update, user, language)
+        try:
+            user = await self._get_or_create_user(update.effective_user)
+            language = user.language_code or 'fa'
+            await self._escalate_to_human(update, user, language)
+        except Exception as e:
+            logging.error(f"Error in support_command: {e}")
+            await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
 
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle text messages"""
-        user = await self._get_or_create_user(update.effective_user)
-        language = user.language_code or 'fa'
-        message_text = update.message.text
+        try:
+            user = await self._get_or_create_user(update.effective_user)
+            language = user.language_code or 'fa'
+            message_text = update.message.text
 
-        # Get or create conversation
-        conversation = await self._get_or_create_conversation(user)
+            # Get or create conversation
+            conversation = await self._get_or_create_conversation(user)
 
-        # Save user message
-        await self._save_message(conversation.id, message_text, is_from_user=True, 
-                                telegram_message_id=update.message.message_id)
+            # Save user message
+            await self._save_message(conversation.id, message_text, is_from_user=True, 
+                                    telegram_message_id=update.message.message_id)
 
-        # Check if user is providing order number
-        session = self.user_sessions.get(user.telegram_id, {})
-        if session.get('waiting_for_order_number'):
-            await self._handle_order_tracking(update, user, message_text, language)
-            return
-
-        # Show typing action
-        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-
-        # Analyze intent first
-        intent_analysis = self.ai_service.analyze_intent(message_text, language)
-
-        # Handle specific intents
-        if intent_analysis['intent'] == 'order_tracking':
-            entities = intent_analysis.get('entities', {})
-            order_number = entities.get('order_number')
-            if order_number:
-                await self._handle_order_tracking(update, user, order_number, language)
-                return
-            else:
-                await self._prompt_for_order_number(update, user, language)
+            # Check if user is providing order number
+            session = self.user_sessions.get(user.telegram_id, {})
+            if session.get('waiting_for_order_number'):
+                await self._handle_order_tracking(update, user, message_text, language)
                 return
 
-        elif intent_analysis['intent'] == 'category_browse':
-            await self._show_categories(update, language)
-            return
+            # Show typing action
+            await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
 
-        elif intent_analysis['intent'] == 'product_inquiry':
-            # If looking for specific product, try to help
-            await self._handle_product_inquiry(update, user, message_text, language)
-            return
+            # Analyze intent first
+            intent_analysis = self.ai_service.analyze_intent(message_text, language)
 
-        # Generate AI response
-        conversation_context = await self._get_conversation_context(conversation.id)
-        ai_response = self.ai_service.generate_response(
-            message_text, conversation_context, language
-        )
+            # Handle specific intents
+            if intent_analysis['intent'] == 'order_tracking':
+                entities = intent_analysis.get('entities', {})
+                order_number = entities.get('order_number')
+                if order_number:
+                    await self._handle_order_tracking(update, user, order_number, language)
+                    return
+                else:
+                    await self._prompt_for_order_number(update, user, language)
+                    return
 
-        # Check if should escalate to human
-        if ai_response['should_escalate'] or ai_response['confidence'] < 0.3:
-            await self._escalate_to_human(update, user, language)
-            return
+            elif intent_analysis['intent'] == 'category_browse':
+                await self._show_categories(update, language)
+                return
 
-        # Send AI response
-        response_text = ai_response['response']
-        await update.message.reply_text(response_text)
+            elif intent_analysis['intent'] == 'product_inquiry':
+                # If looking for specific product, try to help
+                await self._handle_product_inquiry(update, user, message_text, language)
+                return
 
-        # Save bot response
-        await self._save_message(conversation.id, response_text, is_from_user=False, 
-                                is_ai_response=True, ai_confidence=ai_response['confidence'])
+            # Generate AI response
+            conversation_context = await self._get_conversation_context(conversation.id)
+            ai_response = self.ai_service.generate_response(
+                message_text, conversation_context, language
+            )
 
-        # Track interaction
-        await self._track_interaction(user.id, 'ai_conversation', {
-            'intent': intent_analysis['intent'],
-            'confidence': ai_response['confidence']
-        })
+            # Check if should escalate to human
+            if ai_response['should_escalate'] or ai_response['confidence'] < 0.3:
+                await self._escalate_to_human(update, user, language)
+                return
+
+            # Send AI response
+            response_text = ai_response['response']
+            await update.message.reply_text(response_text)
+
+            # Save bot response
+            await self._save_message(conversation.id, response_text, is_from_user=False, 
+                                    is_ai_response=True, ai_confidence=ai_response['confidence'])
+
+            # Track interaction
+            await self._track_interaction(user.id, 'ai_conversation', {
+                'intent': intent_analysis['intent'],
+                'confidence': ai_response['confidence']
+            })
+
+        except Exception as e:
+            logging.error(f"Error in handle_message: {e}")
+            await update.message.reply_text("متأسفانه خطایی رخ داده است. لطفاً دوباره تلاش کنید.")
 
     async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle button callbacks"""
-        query = update.callback_query
-        await query.answer()
+        try:
+            query = update.callback_query
+            await query.answer()
 
-        user = await self._get_or_create_user(update.effective_user)
-        language = user.language_code or 'fa'
+            user = await self._get_or_create_user(update.effective_user)
+            language = user.language_code or 'fa'
 
-        data = query.data
+            data = query.data
 
-        if data == 'show_categories':
-            await self._show_categories_inline(query, language)
+            if data == 'show_categories':
+                await self._show_categories_inline(query, language)
 
-        elif data == 'order_tracking':
-            await self._prompt_for_order_number_inline(query, user, language)
+            elif data == 'order_tracking':
+                await self._prompt_for_order_number_inline(query, user, language)
 
-        elif data == 'contact_support':
-            await self._escalate_to_human_inline(query, user, language)
+            elif data == 'contact_support':
+                await self._escalate_to_human_inline(query, user, language)
 
-        elif data == 'main_menu':
-            await self._show_main_menu_inline(query, language)
+            elif data == 'main_menu':
+                await self._show_main_menu_inline(query, language)
 
-        elif data.startswith('category_'):
-            category_id = int(data.replace('category_', ''))
-            await self._show_category_products(query, user, category_id, language)
+            elif data.startswith('category_'):
+                category_id = int(data.replace('category_', ''))
+                await self._show_category_products(query, user, category_id, language)
 
-        elif data.startswith('product_'):
-            product_id = int(data.replace('product_', ''))
-            await self._show_product_details(query, user, product_id, language)
+            elif data.startswith('product_'):
+                product_id = int(data.replace('product_', ''))
+                await self._show_product_details(query, user, product_id, language)
 
-        elif data.startswith('rate_'):
-            rating = int(data.replace('rate_', ''))
-            await self._handle_rating(query, user, rating, language)
+            elif data.startswith('rate_'):
+                rating = int(data.replace('rate_', ''))
+                await self._handle_rating(query, user, rating, language)
+
+        except Exception as e:
+            logging.error(f"Error in button_callback: {e}")
 
     async def _show_main_menu(self, update: Update, language: str):
         """Show main menu keyboard"""
-        keyboard = [
-            [MESSAGES[language]['categories'], MESSAGES[language]['order_tracking']],
-            [MESSAGES[language]['support']]
-        ]
+        try:
+            keyboard = [
+                [MESSAGES[language]['categories'], MESSAGES[language]['order_tracking']],
+                [MESSAGES[language]['support']]
+            ]
 
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+            reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-        await update.message.reply_text(
-            MESSAGES[language]['main_menu'],
-            reply_markup=reply_markup
-        )
+            await update.message.reply_text(
+                MESSAGES[language]['main_menu'],
+                reply_markup=reply_markup
+            )
+        except Exception as e:
+            logging.error(f"Error in _show_main_menu: {e}")
 
     async def _show_main_menu_inline(self, query, language: str):
         """Show main menu with inline keyboard"""
-        keyboard = [
-            [InlineKeyboardButton(MESSAGES[language]['categories'], callback_data='show_categories')],
-            [InlineKeyboardButton(MESSAGES[language]['order_tracking'], callback_data='order_tracking')],
-            [InlineKeyboardButton(MESSAGES[language]['support'], callback_data='contact_support')]
-        ]
+        try:
+            keyboard = [
+                [InlineKeyboardButton(MESSAGES[language]['categories'], callback_data='show_categories')],
+                [InlineKeyboardButton(MESSAGES[language]['order_tracking'], callback_data='order_tracking')],
+                [InlineKeyboardButton(MESSAGES[language]['support'], callback_data='contact_support')]
+            ]
 
-        reply_markup = InlineKeyboardMarkup(keyboard)
+            reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await query.edit_message_text(
-            MESSAGES[language]['main_menu'],
-            reply_markup=reply_markup
-        )
+            await query.edit_message_text(
+                MESSAGES[language]['main_menu'],
+                reply_markup=reply_markup
+            )
+        except Exception as e:
+            logging.error(f"Error in _show_main_menu_inline: {e}")
 
     async def _show_categories(self, update: Update, language: str):
         """Show product categories"""
@@ -380,13 +412,11 @@ class TelegramBot:
     async def _prompt_for_order_number(self, update: Update, user: User, language: str):
         """Prompt user to enter order number"""
         self.user_sessions[user.telegram_id] = {'waiting_for_order_number': True}
-
         await update.message.reply_text(MESSAGES[language]['order_number_prompt'])
 
     async def _prompt_for_order_number_inline(self, query, user: User, language: str):
         """Prompt user to enter order number (inline)"""
         self.user_sessions[user.telegram_id] = {'waiting_for_order_number': True}
-
         await query.edit_message_text(MESSAGES[language]['order_number_prompt'])
 
     async def _handle_order_tracking(self, update: Update, user: User, order_number: str, language: str):
@@ -457,84 +487,112 @@ class TelegramBot:
 
     async def _escalate_to_human(self, update: Update, user: User, language: str):
         """Escalate conversation to human support"""
-        # Mark current conversation as escalated
-        conversation = await self._get_or_create_conversation(user)
+        try:
+            # Mark current conversation as escalated
+            conversation = await self._get_or_create_conversation(user)
 
-        with self.db.session() as session:
-            conv = session.get(Conversation, conversation.id)
-            if conv:
-                conv.status = ConversationStatus.ESCALATED
-                conv.escalated_at = datetime.utcnow()
-                session.commit()
+            # Use asyncio to handle database operations
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._update_conversation_status, conversation.id)
 
-        escalation_message = MESSAGES[language]['escalating_to_human']
-        support_message = MESSAGES[language]['human_support_message']
+            escalation_message = MESSAGES[language]['escalating_to_human']
+            support_message = MESSAGES[language]['human_support_message']
 
-        await update.message.reply_text(escalation_message)
-        await update.message.reply_text(f"{support_message}\n\n{Config.SUPPORT_CONTACT}")
+            await update.message.reply_text(escalation_message)
+            await update.message.reply_text(f"{support_message}\n\n{Config.SUPPORT_CONTACT}")
 
-        # Track escalation
-        await self._track_interaction(user.id, 'escalation')
+            # Track escalation
+            await self._track_interaction(user.id, 'escalation')
 
-        # Ask for rating
-        await self._request_rating(update, user, language)
+            # Ask for rating
+            await self._request_rating(update, user, language)
+
+        except Exception as e:
+            logging.error(f"Error escalating to human: {e}")
 
     async def _escalate_to_human_inline(self, query, user: User, language: str):
         """Escalate to human support (inline)"""
-        conversation = await self._get_or_create_conversation(user)
+        try:
+            conversation = await self._get_or_create_conversation(user)
 
+            # Use asyncio to handle database operations
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._update_conversation_status, conversation.id)
+
+            support_message = MESSAGES[language]['human_support_message']
+
+            await query.edit_message_text(f"{support_message}\n\n{Config.SUPPORT_CONTACT}")
+
+            # Track escalation
+            await self._track_interaction(user.id, 'escalation')
+
+        except Exception as e:
+            logging.error(f"Error escalating to human inline: {e}")
+
+    def _update_conversation_status(self, conversation_id):
+        """Update conversation status in database (sync function for executor)"""
         with self.db.session() as session:
-            conv = session.get(Conversation, conversation.id)
+            conv = session.get(Conversation, conversation_id)
             if conv:
                 conv.status = ConversationStatus.ESCALATED
                 conv.escalated_at = datetime.utcnow()
                 session.commit()
 
-        support_message = MESSAGES[language]['human_support_message']
-
-        await query.edit_message_text(f"{support_message}\n\n{Config.SUPPORT_CONTACT}")
-
-        # Track escalation
-        await self._track_interaction(user.id, 'escalation')
-
     async def _request_rating(self, update: Update, user: User, language: str):
         """Request conversation rating from user"""
-        keyboard = []
-        stars = ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐']
+        try:
+            keyboard = []
+            stars = ['⭐', '⭐⭐', '⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐']
 
-        for i, star in enumerate(stars):
-            keyboard.append([InlineKeyboardButton(star, callback_data=f"rate_{i+1}")])
+            for i, star in enumerate(stars):
+                keyboard.append([InlineKeyboardButton(star, callback_data=f"rate_{i+1}")])
 
-        reply_markup = InlineKeyboardMarkup(keyboard)
+            reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await update.message.reply_text(
-            MESSAGES[language]['rate_conversation'],
-            reply_markup=reply_markup
-        )
+            await update.message.reply_text(
+                MESSAGES[language]['rate_conversation'],
+                reply_markup=reply_markup
+            )
+        except Exception as e:
+            logging.error(f"Error requesting rating: {e}")
 
     async def _handle_rating(self, query, user: User, rating: int, language: str):
         """Handle conversation rating"""
-        # Save rating to current conversation
-        conversation = await self._get_current_conversation(user)
+        try:
+            # Save rating to current conversation
+            conversation = await self._get_current_conversation(user)
 
-        if conversation:
-            with self.db.session() as session:
-                conv = session.get(Conversation, conversation.id)
-                if conv:
-                    conv.satisfaction_rating = rating
-                    conv.ended_at = datetime.utcnow()
-                    conv.status = 'resolved'
-                    session.commit()
+            if conversation:
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, self._save_rating, conversation.id, rating)
 
-        thank_you = "ممنون از امتیاز شما! 🙏" if language == 'fa' else "Thank you for your rating! 🙏"
+            thank_you = "ممنون از امتیاز شما! 🙏" if language == 'fa' else "Thank you for your rating! 🙏"
 
-        await query.edit_message_text(thank_you)
+            await query.edit_message_text(thank_you)
 
-        # Track rating
-        await self._track_interaction(user.id, 'rating', {'rating': rating})
+            # Track rating
+            await self._track_interaction(user.id, 'rating', {'rating': rating})
+
+        except Exception as e:
+            logging.error(f"Error handling rating: {e}")
+
+    def _save_rating(self, conversation_id, rating):
+        """Save rating to database (sync function for executor)"""
+        with self.db.session() as session:
+            conv = session.get(Conversation, conversation_id)
+            if conv:
+                conv.satisfaction_rating = rating
+                conv.ended_at = datetime.utcnow()
+                conv.status = 'resolved'
+                session.commit()
 
     async def _get_or_create_user(self, telegram_user) -> User:
         """Get or create user from Telegram user object"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._sync_get_or_create_user, telegram_user)
+
+    def _sync_get_or_create_user(self, telegram_user) -> User:
+        """Sync version of get or create user"""
         with self.db.session() as session:
             user = session.query(User).filter_by(telegram_id=telegram_user.id).first()
 
@@ -558,6 +616,11 @@ class TelegramBot:
 
     async def _get_or_create_conversation(self, user: User) -> Conversation:
         """Get active conversation or create new one"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._sync_get_or_create_conversation, user)
+
+    def _sync_get_or_create_conversation(self, user: User) -> Conversation:
+        """Sync version of get or create conversation"""
         with self.db.session() as session:
             # Look for active conversation
             conversation = session.query(Conversation).filter_by(
@@ -578,6 +641,11 @@ class TelegramBot:
 
     async def _get_current_conversation(self, user: User) -> Conversation:
         """Get current active conversation"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._sync_get_current_conversation, user)
+
+    def _sync_get_current_conversation(self, user: User) -> Conversation:
+        """Sync version of get current conversation"""
         with self.db.session() as session:
             return session.query(Conversation).filter_by(
                 user_id=user.id,
@@ -588,6 +656,14 @@ class TelegramBot:
                            telegram_message_id: int = None, is_ai_response: bool = False, 
                            ai_confidence: float = None):
         """Save message to database"""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._sync_save_message, conversation_id, content, 
+                                   is_from_user, telegram_message_id, is_ai_response, ai_confidence)
+
+    def _sync_save_message(self, conversation_id: int, content: str, is_from_user: bool = True, 
+                          telegram_message_id: int = None, is_ai_response: bool = False, 
+                          ai_confidence: float = None):
+        """Sync version of save message"""
         with self.db.session() as session:
             message = Message(
                 conversation_id=conversation_id,
@@ -602,6 +678,11 @@ class TelegramBot:
 
     async def _get_conversation_context(self, conversation_id: int) -> list:
         """Get conversation context for AI"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self._sync_get_conversation_context, conversation_id)
+
+    def _sync_get_conversation_context(self, conversation_id: int) -> list:
+        """Sync version of get conversation context"""
         with self.db.session() as session:
             messages = session.query(Message).filter_by(
                 conversation_id=conversation_id
@@ -615,6 +696,11 @@ class TelegramBot:
 
     async def _track_interaction(self, user_id: int, interaction_type: str, data: dict = None):
         """Track user interaction"""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._sync_track_interaction, user_id, interaction_type, data)
+
+    def _sync_track_interaction(self, user_id: int, interaction_type: str, data: dict = None):
+        """Sync version of track interaction"""
         with self.db.session() as session:
             interaction = UserInteraction(
                 user_id=user_id,
@@ -626,6 +712,11 @@ class TelegramBot:
 
     async def _track_product_view(self, user_id: int, product: dict):
         """Track product view"""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._sync_track_product_view, user_id, product)
+
+    def _sync_track_product_view(self, user_id: int, product: dict):
+        """Sync version of track product view"""
         with self.db.session() as session:
             product_view = ProductView(
                 user_id=user_id,
@@ -639,6 +730,11 @@ class TelegramBot:
 
     async def _track_order_tracking(self, user_id: int, order_number: str, woocommerce_order_id: int = None):
         """Track order tracking request"""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._sync_track_order_tracking, user_id, order_number, woocommerce_order_id)
+
+    def _sync_track_order_tracking(self, user_id: int, order_number: str, woocommerce_order_id: int = None):
+        """Sync version of track order tracking"""
         with self.db.session() as session:
             order_tracking = OrderTracking(
                 user_id=user_id,
@@ -660,11 +756,28 @@ class TelegramBot:
             except Exception:
                 pass
 
-    def start(self):
-        """Start the bot"""
+    async def run(self):
+        """Run the bot asynchronously"""
         try:
             logging.info("Starting Telegram bot...")
-            self.application.run_polling(drop_pending_updates=True)
+            await self.application.initialize()
+            await self.application.start()
+            await self.application.updater.start_polling(drop_pending_updates=True)
+            
+            # Keep the bot running
+            while True:
+                await asyncio.sleep(1)
+                
+        except Exception as e:
+            logging.error(f"Failed to start bot: {e}")
+            raise
+        finally:
+            await self.application.stop()
+
+    def start(self):
+        """Start the bot (sync wrapper)"""
+        try:
+            asyncio.run(self.run())
         except Exception as e:
             logging.error(f"Failed to start bot: {e}")
             raise
