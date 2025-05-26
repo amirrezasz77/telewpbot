@@ -1,10 +1,9 @@
 python-telegram-bot==20.7
 Flask-Migrate
-flask
+flask[async]==3.0.3
 flask-sqlalchemy
 python-dotenv
 openai
 woocommerce
 requests
 gunicorn
-quart
